@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  mariadb:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "030720084"
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: "030720084"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  wordpress:
+    depends_on:
+      - mariadb
+    image: wordpress:fpm-alpine
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: 030720084
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wp_data:/var/www/html
+
+  nginx:
+    image: nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-conf:/etc/nginx/conf.d
+      - wp_data:/var/www/html
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      -wp_data:/var/www/html
+    depends_on:
+      -nginx
+    command: certonly --webroot --webroot-path=/var/www/html --email yahya.esma@std.izu.edu.tr --agree-tos --no-eff-email -d esmayahya.me
+
+volumes:
+  mariadb_data: {}
+  wp_data: {}
+  certbot-etc: {}
+  certbot-var: {}
